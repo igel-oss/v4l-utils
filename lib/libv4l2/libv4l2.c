@@ -1620,14 +1620,15 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
 	void *result;
 
 	index = v4l2_get_index(fd);
-	if (index == -1 ||
-			/* Check if the mmap data matches our answer to QUERY_BUF. If it doesn't,
-			   let the kernel handle it (to allow for mmap-based non capture use) */
-			start || length != devices[index].convert_mmap_frame_size ||
-			((unsigned int)offset & ~0xFFu) != V4L2_MMAP_OFFSET_MAGIC) {
-		if (index != -1)
-			V4L2_LOG("Passing mmap(%p, %d, ..., %x, through to the driver\n",
-					start, (int)length, (int)offset);
+	if (index == -1)
+		return (void *)SYS_MMAP(start, length, prot, flags, fd, offset);
+
+	/* Check if the mmap data matches our answer to QUERY_BUF. If it doesn't,
+	   let the kernel handle it (to allow for mmap-based non capture use) */
+	if (start || length != devices[index].convert_mmap_frame_size ||
+	    ((unsigned int)offset & ~0xFFu) != V4L2_MMAP_OFFSET_MAGIC) {
+		V4L2_LOG("Passing mmap(%p, %d, ..., %x, through to the driver\n",
+				start, (int)length, (int)offset);
 
 		if (offset & ((1 << MMAP2_PAGE_SHIFT) - 1)) {
 			errno = EINVAL;
