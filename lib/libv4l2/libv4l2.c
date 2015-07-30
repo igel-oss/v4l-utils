@@ -1635,6 +1635,14 @@ void *v4l2_mmap(void *start, size_t length, int prot, int flags, int fd,
 			return MAP_FAILED;
 		}
 
+		if (devices[index].dev_ops->mmap) {
+			result = devices[index].dev_ops->
+					mmap(devices[index].dev_ops_priv, start,
+					     length, prot, flags, fd, offset);
+			if (result != MAP_FAILED)
+				return result;
+		}
+
 		return (void *)SYS_MMAP(start, length, prot, flags, fd, offset);
 	}
 
